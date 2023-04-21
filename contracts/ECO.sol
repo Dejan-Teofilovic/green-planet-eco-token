@@ -456,6 +456,15 @@ contract ECO is ERC20, Ownable {
     }
 
     /**
+        Set the root of merkle tree of Partners' wallet addresses
+     */
+    function setMerkleRootOfPartners(
+        bytes32 _merkleRootOfPartners
+    ) public onlyOwner {
+        merkleRootOfPartners = _merkleRootOfPartners;
+    }
+
+    /**
         Sell the tokens to the partners
      */
     function mintForPartners(
@@ -481,8 +490,8 @@ contract ECO is ERC20, Ownable {
             "You are not our partner."
         );
 
-        _mint(msg.sender, amount);
-        mintableTokenAmountForPartners -= amount;
+        _mint(msg.sender, amount * 1e18);
+        mintableTokenAmountForPartners -= amount * 1e18;
     }
 
     /**
@@ -499,17 +508,8 @@ contract ECO is ERC20, Ownable {
         );
         require(msg.value >= tokenPriceForPrivate * amount, "Not Enough Funds");
 
-        _mint(msg.sender, amount);
-        mintableTokenAmountForPrivate -= amount;
-    }
-
-    /**
-        Set the root of merkle tree of Partners' wallet addresses
-     */
-    function setMerkleRootOfWl1(
-        bytes32 _merkleRootOfPartners
-    ) public onlyOwner {
-        merkleRootOfPartners = _merkleRootOfPartners;
+        _mint(msg.sender, amount * 1e18);
+        mintableTokenAmountForPrivate -= amount * 1e18;
     }
 
     /**
@@ -526,8 +526,12 @@ contract ECO is ERC20, Ownable {
         );
         require(msg.value >= tokenPriceForPublic * amount, "Not Enough Funds");
 
-        _mint(msg.sender, amount);
-        mintableTokenAmountForPublic -= amount;
+        _mint(msg.sender, amount * 1e18);
+        mintableTokenAmountForPublic -= amount * 1e18;
+    }
+
+    function withdraw(address ownerWallet) public onlyOwner {
+        payable(ownerWallet).transfer(address(this).balance);
     }
 
     //  fallback to recieve ether in
