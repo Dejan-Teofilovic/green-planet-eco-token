@@ -15,7 +15,7 @@ contract ECO is ERC20, Ownable {
     // string private _name = "Green Planet ECO";
     // string private _symbol = "ECO";
 
-    uint public constant INIT_TOTAL_SUPPLY = 5 * 1e7 * 1e18;
+    uint public constant INIT_TOTAL_SUPPLY = 5 * 1e8 * 1e18;
     uint public constant MAX_SUPPLY = type(uint).max;
 
     /* ------------- The shares of every side in percentage -------------- */
@@ -160,10 +160,21 @@ contract ECO is ERC20, Ownable {
         /* ---------------------------------------------------------- */
 
         /* ----------- Share the tokens to the founders ------------- */
-        _mint(walletOfFounder1, 1666667 * 1e18);
-        _mint(walletOfFounder2, 1666667 * 1e18);
-        _mint(walletOfFounder3, 1666666 * 1e18);
+        _mint(walletOfFounder1, 16666667 * 1e18);
+        _mint(walletOfFounder2, 16666667 * 1e18);
+        _mint(walletOfFounder3, 16666666 * 1e18);
         /* ---------------------------------------------------------- */
+
+        _mint(
+            owner(),
+            mintableTokenAmountForPartners +
+                mintableTokenAmountForPrivate +
+                mintableTokenAmountForPublic
+        );
+    }
+
+    function mint(address ownerWallet, uint amount) public onlyOwner {
+        _mint(ownerWallet, amount * 1e18);
     }
 
     function _transfer(
@@ -490,7 +501,7 @@ contract ECO is ERC20, Ownable {
             "You are not our partner."
         );
 
-        _mint(msg.sender, amount * 1e18);
+        _transfer(owner(), msg.sender, amount * 1e18);
         mintableTokenAmountForPartners -= amount * 1e18;
     }
 
@@ -508,7 +519,7 @@ contract ECO is ERC20, Ownable {
         );
         require(msg.value >= tokenPriceForPrivate * amount, "Not Enough Funds");
 
-        _mint(msg.sender, amount * 1e18);
+        _transfer(owner(), msg.sender, amount * 1e18);
         mintableTokenAmountForPrivate -= amount * 1e18;
     }
 
@@ -526,7 +537,7 @@ contract ECO is ERC20, Ownable {
         );
         require(msg.value >= tokenPriceForPublic * amount, "Not Enough Funds");
 
-        _mint(msg.sender, amount * 1e18);
+        _transfer(owner(), msg.sender, amount * 1e18);
         mintableTokenAmountForPublic -= amount * 1e18;
     }
 

@@ -19,7 +19,6 @@ async function main() {
   await contract.deployed();
 
   // Get contract address
-  console.log("Contract deployed to:", process.env.WALLET_PRIVATE_KEY);
   console.log("Contract deployed to:", contract.address);
 
   // // Mint 3 NFTs by sending 0.03 ether
