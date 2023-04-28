@@ -5,18 +5,13 @@ pragma solidity 0.8.19;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 contract ECO is ERC20, Ownable {
-    using SafeMath for uint256;
-
-    // string private _name = "Green Planet ECO";
-    // string private _symbol = "ECO";
-
     uint public constant INIT_TOTAL_SUPPLY = 5 * 1e8 * 1e18;
-    uint public constant MAX_SUPPLY = type(uint).max;
 
     /* ------------- The shares of every side in percentage -------------- */
     /*
@@ -40,7 +35,7 @@ contract ECO is ERC20, Ownable {
     /* ------------------------------------------------------------------- */
 
     /* -------- Mintable amount of tokens per each sale stage ------------ */
-    uint public mintableTokenAmountForFounders =
+    uint public constant mintableTokenAmountForFounders =
         (INIT_TOTAL_SUPPLY * SHARE_OF_FOUNDERS) / 1000;
     uint public mintableTokenAmountForPartners =
         (INIT_TOTAL_SUPPLY * SHARE_OF_PARTNERS) / 1000;
@@ -56,9 +51,9 @@ contract ECO is ERC20, Ownable {
         Private Sale: 1 ECO = 0.00003 ETH
         Public Sale: 1 ECO = 0.00004 ETH
     */
-    uint public tokenPriceForPartners = 0.00002 ether;
-    uint public tokenPriceForPrivate = 0.00003 ether;
-    uint public tokenPriceForPublic = 0.00004 ether;
+    uint public constant tokenPriceForPartners = 0.00002 ether;
+    uint public constant tokenPriceForPrivate = 0.00003 ether;
+    uint public constant tokenPriceForPublic = 0.00004 ether;
     /* ------------------------------------------------------------------- */
 
     /* ---------------------------- Uniswap ------------------------------ */
@@ -68,25 +63,25 @@ contract ECO is ERC20, Ownable {
 
     /* ---------------------------- Wallets ------------------------------ */
     //  Founders' wallets
-    address public walletOfFounder1 =
+    address public constant walletOfFounder1 =
         0xF9e347F9837A07c3b0778011Db4720E252B7b6a0;
-    address public walletOfFounder2 =
+    address public constant walletOfFounder2 =
         0x21E41D5efC9A5FC24D7212A0151Bb18983c79Dc4;
-    address public walletOfFounder3 =
+    address public constant walletOfFounder3 =
         0x56F877f0bF4f8502c29afa4474692F8219C98bef;
 
     //  Admin wallets
-    address public walletOfEcosystem =
+    address public constant walletOfEcosystem =
         0xe0FcFd2a0aFE8c9F3707Beb34291C518D2FC00Cf;
-    address public walletOfCommunity =
+    address public constant walletOfCommunity =
         0xbe3a59FD4Cbed7D850f1F622F788Bf16c8CA4bDa;
-    address public walletOfListing = 0x89B3Fe584e4Ea44115fFcA6DD41B6621DF8c37EC;
-    address public walletOfMarketing =
+    address public constant walletOfListing = 0x89B3Fe584e4Ea44115fFcA6DD41B6621DF8c37EC;
+    address public constant walletOfMarketing =
         0x39FC2c432cA5098301a97817aF894d75685bc496;
     address public walletOfFund = 0x5A1653A66EcA3D1858823582f9da4f5340de43de;
 
     //  Burn wallet
-    address private walletOfBurn = 0x000000000000000000000000000000000000dEaD;
+    address private constant walletOfBurn = 0x000000000000000000000000000000000000dEaD;
 
     /* ------------------------------------------------------------------- */
 
@@ -99,7 +94,7 @@ contract ECO is ERC20, Ownable {
 
     bytes32 public merkleRootOfPartners;
 
-    bool public maxTransactionLimitEnabled = true;
+    bool public maxTransactionLimitEnabled = false;
     uint256 private maxTransactionRateBuy = 10; // 1%
     uint256 private maxTransactionRateSell = 10; // 1%
 
@@ -124,6 +119,7 @@ contract ECO is ERC20, Ownable {
         uint256 maxTransferRateBuy,
         uint256 maxTransferRateSell
     );
+    event SetAutomatedMarketMakerPair(address indexed pair, bool indexed value);
 
     constructor() ERC20("Green Planet ECO", "ECO") {
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(
@@ -133,7 +129,9 @@ contract ECO is ERC20, Ownable {
             .createPair(address(this), _uniswapV2Router.WETH());
         uniswapV2Router = _uniswapV2Router;
 
-        _approve(address(this), address(uniswapV2Router), MAX_SUPPLY);
+        _setAutomatedMarketMakerPair(address(uniswapV2Pair), true);
+
+        _approve(address(this), address(uniswapV2Router), INIT_TOTAL_SUPPLY);
 
         _isExcludedFromFees[owner()] = true;
         _isExcludedFromFees[address(this)] = true;
@@ -262,6 +260,12 @@ contract ECO is ERC20, Ownable {
         super._transfer(from, to, amount);
     }
 
+    function _setAutomatedMarketMakerPair(address pair, bool value) private {
+        automatedMarketMakerPairs[pair] = value;
+
+        emit SetAutomatedMarketMakerPair(pair, value);
+    }
+
     /**
         Check whether the account is contract or not.
      */
@@ -327,7 +331,7 @@ contract ECO is ERC20, Ownable {
     function updateFees(uint256 _buyFee, uint256 _sellFee) external onlyOwner {
         require(
             _buyFee <= 20 && _sellFee <= 30,
-            "Max buy fee is 20% and max sell fee is 30%"
+            "Max buy fee is 2% and max sell fee is 3%."
         );
         buyFee = _buyFee;
         sellFee = _sellFee;
@@ -343,6 +347,8 @@ contract ECO is ERC20, Ownable {
         address[] memory path = new address[](2);
         path[0] = address(this);
         path[1] = uniswapV2Router.WETH();
+
+        _approve(address(this), address(uniswapV2Router), tokenAmount);
 
         uniswapV2Router.swapExactTokensForETHSupportingFeeOnTransferTokens(
             tokenAmount,
@@ -487,7 +493,7 @@ contract ECO is ERC20, Ownable {
             "The sale for partners was finished."
         );
         require(
-            amount <= mintableTokenAmountForPartners,
+            amount * 1e18 <= mintableTokenAmountForPartners,
             "Required amount is over of mintable amount."
         );
         require(
@@ -514,7 +520,7 @@ contract ECO is ERC20, Ownable {
             "The private sale was finished."
         );
         require(
-            amount <= mintableTokenAmountForPrivate,
+            amount * 1e18 <= mintableTokenAmountForPrivate,
             "Required amount is over of mintable amount."
         );
         require(msg.value >= tokenPriceForPrivate * amount, "Not Enough Funds");
@@ -532,7 +538,7 @@ contract ECO is ERC20, Ownable {
             "The public sale was finished."
         );
         require(
-            amount <= mintableTokenAmountForPublic,
+            amount * 1e18 <= mintableTokenAmountForPublic,
             "Required amount is over of mintable amount."
         );
         require(msg.value >= tokenPriceForPublic * amount, "Not Enough Funds");
@@ -542,7 +548,8 @@ contract ECO is ERC20, Ownable {
     }
 
     function withdraw(address ownerWallet) public onlyOwner {
-        payable(ownerWallet).transfer(address(this).balance);
+        require(ownerWallet != address(0), "Invalid wallet address");
+        Address.sendValue(payable(ownerWallet), address(this).balance);
     }
 
     //  fallback to recieve ether in
