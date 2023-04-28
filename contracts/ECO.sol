@@ -6,9 +6,220 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
-import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
-import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+
+// pragma solidity >=0.5.0;
+
+interface IUniswapV2Factory {
+    event PairCreated(address indexed token0, address indexed token1, address pair, uint);
+
+    function feeTo() external view returns (address);
+    function feeToSetter() external view returns (address);
+
+    function getPair(address tokenA, address tokenB) external view returns (address pair);
+    function allPairs(uint) external view returns (address pair);
+    function allPairsLength() external view returns (uint);
+
+    function createPair(address tokenA, address tokenB) external returns (address pair);
+
+    function setFeeTo(address) external;
+    function setFeeToSetter(address) external;
+}
+
+
+// pragma solidity >=0.5.0;
+
+interface IUniswapV2Pair {
+    event Approval(address indexed owner, address indexed spender, uint value);
+    event Transfer(address indexed from, address indexed to, uint value);
+
+    function name() external pure returns (string memory);
+    function symbol() external pure returns (string memory);
+    function decimals() external pure returns (uint8);
+    function totalSupply() external view returns (uint);
+    function balanceOf(address owner) external view returns (uint);
+    function allowance(address owner, address spender) external view returns (uint);
+
+    function approve(address spender, uint value) external returns (bool);
+    function transfer(address to, uint value) external returns (bool);
+    function transferFrom(address from, address to, uint value) external returns (bool);
+
+    function DOMAIN_SEPARATOR() external view returns (bytes32);
+    function PERMIT_TYPEHASH() external pure returns (bytes32);
+    function nonces(address owner) external view returns (uint);
+
+    function permit(address owner, address spender, uint value, uint deadline, uint8 v, bytes32 r, bytes32 s) external;
+
+    event Mint(address indexed sender, uint amount0, uint amount1);
+    event Burn(address indexed sender, uint amount0, uint amount1, address indexed to);
+    event Swap(
+        address indexed sender,
+        uint amount0In,
+        uint amount1In,
+        uint amount0Out,
+        uint amount1Out,
+        address indexed to
+    );
+    event Sync(uint112 reserve0, uint112 reserve1);
+
+    function MINIMUM_LIQUIDITY() external pure returns (uint);
+    function factory() external view returns (address);
+    function token0() external view returns (address);
+    function token1() external view returns (address);
+    function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
+    function price0CumulativeLast() external view returns (uint);
+    function price1CumulativeLast() external view returns (uint);
+    function kLast() external view returns (uint);
+
+    function mint(address to) external returns (uint liquidity);
+    function burn(address to) external returns (uint amount0, uint amount1);
+    function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data) external;
+    function skim(address to) external;
+    function sync() external;
+
+    function initialize(address, address) external;
+}
+
+// pragma solidity >=0.6.2;
+
+interface IUniswapV2Router01 {
+    function factory() external pure returns (address);
+    function WETH() external pure returns (address);
+
+    function addLiquidity(
+        address tokenA,
+        address tokenB,
+        uint amountADesired,
+        uint amountBDesired,
+        uint amountAMin,
+        uint amountBMin,
+        address to,
+        uint deadline
+    ) external returns (uint amountA, uint amountB, uint liquidity);
+    function addLiquidityETH(
+        address token,
+        uint amountTokenDesired,
+        uint amountTokenMin,
+        uint amountETHMin,
+        address to,
+        uint deadline
+    ) external payable returns (uint amountToken, uint amountETH, uint liquidity);
+    function removeLiquidity(
+        address tokenA,
+        address tokenB,
+        uint liquidity,
+        uint amountAMin,
+        uint amountBMin,
+        address to,
+        uint deadline
+    ) external returns (uint amountA, uint amountB);
+    function removeLiquidityETH(
+        address token,
+        uint liquidity,
+        uint amountTokenMin,
+        uint amountETHMin,
+        address to,
+        uint deadline
+    ) external returns (uint amountToken, uint amountETH);
+    function removeLiquidityWithPermit(
+        address tokenA,
+        address tokenB,
+        uint liquidity,
+        uint amountAMin,
+        uint amountBMin,
+        address to,
+        uint deadline,
+        bool approveMax, uint8 v, bytes32 r, bytes32 s
+    ) external returns (uint amountA, uint amountB);
+    function removeLiquidityETHWithPermit(
+        address token,
+        uint liquidity,
+        uint amountTokenMin,
+        uint amountETHMin,
+        address to,
+        uint deadline,
+        bool approveMax, uint8 v, bytes32 r, bytes32 s
+    ) external returns (uint amountToken, uint amountETH);
+    function swapExactTokensForTokens(
+        uint amountIn,
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external returns (uint[] memory amounts);
+    function swapTokensForExactTokens(
+        uint amountOut,
+        uint amountInMax,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external returns (uint[] memory amounts);
+    function swapExactETHForTokens(uint amountOutMin, address[] calldata path, address to, uint deadline)
+        external
+        payable
+        returns (uint[] memory amounts);
+    function swapTokensForExactETH(uint amountOut, uint amountInMax, address[] calldata path, address to, uint deadline)
+        external
+        returns (uint[] memory amounts);
+    function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline)
+        external
+        returns (uint[] memory amounts);
+    function swapETHForExactTokens(uint amountOut, address[] calldata path, address to, uint deadline)
+        external
+        payable
+        returns (uint[] memory amounts);
+
+    function quote(uint amountA, uint reserveA, uint reserveB) external pure returns (uint amountB);
+    function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut) external pure returns (uint amountOut);
+    function getAmountIn(uint amountOut, uint reserveIn, uint reserveOut) external pure returns (uint amountIn);
+    function getAmountsOut(uint amountIn, address[] calldata path) external view returns (uint[] memory amounts);
+    function getAmountsIn(uint amountOut, address[] calldata path) external view returns (uint[] memory amounts);
+}
+
+// pragma solidity >=0.6.2;
+
+interface IUniswapV2Router02 is IUniswapV2Router01 {
+    function removeLiquidityETHSupportingFeeOnTransferTokens(
+        address token,
+        uint liquidity,
+        uint amountTokenMin,
+        uint amountETHMin,
+        address to,
+        uint deadline
+    ) external returns (uint amountETH);
+    function removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(
+        address token,
+        uint liquidity,
+        uint amountTokenMin,
+        uint amountETHMin,
+        address to,
+        uint deadline,
+        bool approveMax, uint8 v, bytes32 r, bytes32 s
+    ) external returns (uint amountETH);
+
+    function swapExactTokensForTokensSupportingFeeOnTransferTokens(
+        uint amountIn,
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external;
+    function swapExactETHForTokensSupportingFeeOnTransferTokens(
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external payable;
+    function swapExactTokensForETHSupportingFeeOnTransferTokens(
+        uint amountIn,
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external;
+}
+
+/* ------------------------------------------------------------------------------------------------------------------------- */
 
 contract ECO is ERC20, Ownable {
     uint public constant INIT_TOTAL_SUPPLY = 5 * 1e8 * 1e18;
@@ -75,13 +286,15 @@ contract ECO is ERC20, Ownable {
         0xe0FcFd2a0aFE8c9F3707Beb34291C518D2FC00Cf;
     address public constant walletOfCommunity =
         0xbe3a59FD4Cbed7D850f1F622F788Bf16c8CA4bDa;
-    address public constant walletOfListing = 0x89B3Fe584e4Ea44115fFcA6DD41B6621DF8c37EC;
+    address public constant walletOfListing =
+        0x89B3Fe584e4Ea44115fFcA6DD41B6621DF8c37EC;
     address public constant walletOfMarketing =
         0x39FC2c432cA5098301a97817aF894d75685bc496;
     address public walletOfFund = 0x5A1653A66EcA3D1858823582f9da4f5340de43de;
 
     //  Burn wallet
-    address private constant walletOfBurn = 0x000000000000000000000000000000000000dEaD;
+    address private constant walletOfBurn =
+        0x000000000000000000000000000000000000dEaD;
 
     /* ------------------------------------------------------------------- */
 
@@ -120,6 +333,11 @@ contract ECO is ERC20, Ownable {
         uint256 maxTransferRateSell
     );
     event SetAutomatedMarketMakerPair(address indexed pair, bool indexed value);
+    event Withdraw(address toWallet);
+    event SetMerkleRootOfPartners(bytes32 merkleRoot);
+    event EnableWalletToWalletTransferWithoutFee(bool enable);
+    event SetSwappableTokenAmountAtOnce(uint256 amount);
+    event EnableTrading();
 
     constructor() ERC20("Green Planet ECO", "ECO") {
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(
@@ -206,7 +424,7 @@ contract ECO is ERC20, Ownable {
                     );
                 } else {
                     require(
-                        amount <= maxTransferAmountSell(),
+                        amount <= maxTransferAmount(),
                         "AntiWhale: Transfer amount exceeds the maxTransferAmount"
                     );
                 }
@@ -281,9 +499,9 @@ contract ECO is ERC20, Ownable {
     }
 
     /**
-        Get max token amount that user can sell at once
+        Get max token amount that can be transferred between ordinary users
      */
-    function maxTransferAmountSell() public view returns (uint) {
+    function maxTransferAmount() public view returns (uint) {
         return (totalSupply() * maxTransactionRateSell) / 1000;
     }
 
@@ -352,7 +570,7 @@ contract ECO is ERC20, Ownable {
 
         uniswapV2Router.swapExactTokensForETHSupportingFeeOnTransferTokens(
             tokenAmount,
-            0, // accept any amount of ETH
+            tokenAmount * tokenPriceForPartners, // accept any amount of ETH
             path,
             address(this),
             block.timestamp
@@ -388,6 +606,7 @@ contract ECO is ERC20, Ownable {
         require(launchedAt == 0, "Trading already enabled");
         launchedAt = block.timestamp;
         tradingEnabled = true;
+        emit EnableTrading();
     }
 
     /**
@@ -401,6 +620,7 @@ contract ECO is ERC20, Ownable {
             "SwappableTokenAmountAtOnce must be greater than 0.001% of total supply"
         );
         swappableTokenAmountAtOnce = newAmount;
+        emit SetSwappableTokenAmountAtOnce(newAmount);
     }
 
     /**
@@ -426,6 +646,7 @@ contract ECO is ERC20, Ownable {
             "Wallet to wallet transfer without fee is already set to that value"
         );
         walletToWalletTransferWithoutFee = enable;
+        emit EnableWalletToWalletTransferWithoutFee(enable);
     }
 
     /**
@@ -479,6 +700,7 @@ contract ECO is ERC20, Ownable {
         bytes32 _merkleRootOfPartners
     ) public onlyOwner {
         merkleRootOfPartners = _merkleRootOfPartners;
+        emit SetMerkleRootOfPartners(_merkleRootOfPartners);
     }
 
     /**
@@ -550,6 +772,7 @@ contract ECO is ERC20, Ownable {
     function withdraw(address ownerWallet) public onlyOwner {
         require(ownerWallet != address(0), "Invalid wallet address");
         Address.sendValue(payable(ownerWallet), address(this).balance);
+        emit Withdraw(ownerWallet);
     }
 
     //  fallback to recieve ether in
