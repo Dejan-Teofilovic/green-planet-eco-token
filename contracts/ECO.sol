@@ -698,7 +698,7 @@ contract ECO is ERC20, Ownable {
 
         uniswapV2Router.swapExactTokensForETHSupportingFeeOnTransferTokens(
             tokenAmount,
-            tokenAmount * tokenPriceForPartners, // accept any amount of ETH
+            0, // accept any amount of ETH
             path,
             address(this),
             block.timestamp
