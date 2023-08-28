@@ -16,7 +16,7 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 
 module.exports = {
   solidity: "0.8.19",
-  defaultNetwork: 'goerli',
+  defaultNetwork: 'ethereum',
   networks: {
     goerli: {
       url: TESTNET_RPC_URL,
