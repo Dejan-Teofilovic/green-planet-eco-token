@@ -6,9 +6,9 @@
 
 ## Contact info
 
-- **Email:** atsuokoizumi@gmail.com
-- **Telegram:** [@silivex](https://t.me/silivex)
-- **Discord** [silivex](https://discordapp.com/users/829485006904754209)
+- **Email:** dejanteofilovic2@gmail.com
+
+- **Discord:** [dejan_teofilovic](https://discord.gg/PztT2r5U)
 
 ## Release date
 
